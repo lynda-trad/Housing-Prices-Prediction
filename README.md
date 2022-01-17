@@ -1,6 +1,10 @@
 # Housing Prices Prediction
+### Machine Learning Regression
 
-We want to predict housing prices in California using Machine Learning models :
+Objective : Predict a house price depending on its characteristics
+
+Summary : 
+* Data Visualisation
 * Linear Regression
 * Decision Tree
 
