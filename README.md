@@ -7,5 +7,6 @@ Summary :
 * Data Visualisation
 * Linear Regression
 * Decision Tree
+* XGBoost
 
 Data : https://www.kaggle.com/camnugent/california-housing-prices
