@@ -41,8 +41,8 @@ data.drop_duplicates()
 
 # Infinite Missing values
 
-print("Percentage of missing values on each column :\n")
-print(((data.isnull().sum() / data.shape[0]) * 100).sort_values(ascending=False))
+percentage_nan_str = "Percentage of missing values on each column :\n" + str(
+    ((data.isnull().sum() / data.shape[0]) * 100).sort_values(ascending=False))
 data.replace([np.inf, -np.inf], np.nan, inplace=True)
 data = data.dropna()
 
@@ -66,7 +66,7 @@ pairplot_fig = px.scatter_matrix(data,
                                              'median_house_value', 'ocean_proximity'],
                                  color="median_house_value",
                                  symbol="median_house_value",
-                                 title="Scatter matrix of houses datasets",
+                                 title="Scatter matrix of houses dataset",
                                  labels={col: col.replace('_', ' ') for col in data.columns})
 pairplot_fig.update_traces(diagonal_visible=False)
 
@@ -103,6 +103,8 @@ population_scatter_fig = px.scatter(
     y="latitude",
     hover_data=['population'],
     color="median_house_value",
+    width=700,
+    height=700,
     size=data["population"] / 100,
     labels={"population": 'Population'},
     title='Population concentration depending on location')
@@ -125,7 +127,6 @@ all_houses_map = px.scatter_mapbox(data,
 # LabelEncoding
 le = LabelEncoder()
 le_count = 0
-
 for col in data:
     if data[col].dtype == 'object' or data[col].dtype == 'string':
         le.fit(data[col])
@@ -133,23 +134,31 @@ for col in data:
         le_count += 1
         print(col)
 data.reset_index()
-afterLE_string = str(le_count) + ' columns were label encoded.'
-afterLE_string += "After the labelEncoding, ocean proximity has 5 categories :\n\+" \
-                  "0 == '<1H OCEAN',\n\+" \
-                  "1 == 'INLAND',\n\+" \
-                  "2 == 'ISLAND',\n\+" \
-                  "3 == 'NEAR BAY',\n\+" \
-                  "4 == 'NEAR OCEAN'.\n"
 
 ######################################
 # MACHINE LEARNING
 
-evaluation_explaination = 'MAE takes the differences in all of the predicted and actual prices, adds them up and then divides them by the number of observations. It doesn’t matter if the prediction is higher or lower than the actual price, the algorithm just looks at the absolute value. A lower value indicates better accuracy.' \
-                          'As a result of the squaring, MSE assigns more weight to the bigger errors. The algorithm then continues to add them up and average them. If you are worried about the outliers, this is the number to look at. Keep in mind, it’s not in the same unit as our dependent value. In our case, the value was roughly 82,3755,495, this is NOT the dollar value of the error like MAE. As before, lower the number the better.' \
-                          'RMSE is the square root of MSE. This number is in the same unit as the value that was to be predicted. The value is usually higher than MAE.' \
-                          'MSE and RMSE are really useful when you want to see if the outliers are messing with your predictions.' \
-                          'Also known as the coefficient of determination, the r2_score works by measuring the amount of variance in the predictions explained by the dataset. Simply put, it is the difference between the samples in the dataset and the predictions made by the model.' \
-                          'If the value of the r squared score is 1, it means that the model is perfect and if its value is 0, it means that the model will perform badly on an unseen dataset. This also implies that the closer the value of the r squared score is to 1, the more perfectly the model is trained.'
+mae_explaination = "MAE takes the differences in all of the predicted and actual prices, adds them up and then " \
+                   "divides them by the number of observations. It doesn’t matter if the prediction is higher or " \
+                   "lower than the actual price, the algorithm just looks at the absolute value. A lower value " \
+                   "indicates better accuracy."
+
+mse_explaination = "As a result of the squaring, MSE assigns more weight to the bigger errors. The algorithm " \
+                   "then continues to add them up and average them. If you are worried about the outliers, this " \
+                   "is the number to look at. Keep in mind, it’s not in the same unit as our dependent value. In " \
+                   "our case, the value was roughly 82,3755,495, this is NOT the dollar value of the error like " \
+                   "MAE. As before, lower the number the better."
+
+rmse_explaination = "RMSE is the square root of MSE. This number is in the same unit as the value that was to " \
+                    "be predicted. The value is usually higher than MAE.\n MSE and RMSE are really useful when " \
+                    "you want to see if the outliers are messing with your predictions."
+
+r2score_explaination = "Also known as the coefficient of determination, the r2_score works by measuring the amount " \
+                       "of variance in the predictions explained by the dataset. Simply put, it is the difference " \
+                       "between the samples in the dataset and the predictions made by the model.\n If the value of " \
+                       "the r squared score is 1, it means that the model is perfect and if its value is 0, it means " \
+                       "that the model will perform badly on an unseen dataset. This also implies that the closer " \
+                       "the value of the r squared score is to 1, the more perfectly the model is trained."
 
 X = data[['longitude', 'latitude', 'housing_median_age', 'total_rooms', 'total_bedrooms',
           'population', 'households', 'median_income', 'ocean_proximity']]
@@ -159,10 +168,13 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 # XGBoost
 bst = XGBRegressor()
 bst.fit(X, y)
-
 bst_pred = bst.predict(X_test)
+
+# Results
 predictions = "Predictions:\n\n" + str(bst_pred) + '\n'
 real = "Real values:\n\n" + str(y_test)
+comparisons = predictions + real
+
 MAE = "MAE: " + str(mean_absolute_error(y_test, bst_pred))
 MSE = "MSE: " + str(mean_squared_error(y_test, bst_pred))
 RMSE = "RMSE: " + str(np.sqrt(mean_squared_error(y_test, bst_pred)))
@@ -217,9 +229,10 @@ layout_index = html.Div([
 
     # Conclusion
     html.H3('Conclusion'),
-    html.P('The best two models are Random Forest and XGboost with an R2 score respectively equal to 81% and 93%.'
-           'However, our models seem to suffer from overfitting because their R2 score drops to around 54% '
-           'when using cross validation ! This is why our models still need improvement.'),
+    html.P('The best two models are Random Forest and XGboost with an R2 score respectively equal to 81% and 93%.'),
+    html.P('However, our models seem to suffer from overfitting because their R2 score drops to around 54% '
+           'when using cross validation !'),
+    html.P('This is why our models still need improvement.'),
     html.Br(),
 ])
 
@@ -227,51 +240,87 @@ layout_index = html.Div([
 layout_page_0 = html.Div([
     html.H1('Data Study & Cleanup'),
 
-    # TODO ERROR
-    #     html.Div(className='container',
-    #              children=[
-    #                  html.P('Ocean Proximity Distribution PieChart:'),
-    #                  dcc.Graph(figure=OP_pie_fig),
-    #              ], style={'textAlign': 'center'}),
+    html.Hr(),
+    html.H2("Missing and Infinite Values"),
+    html.P("The dataset has very few missing values so we will just remove the rows with missing values."
+           "We also take care infinite values."),
+    html.P("After the data visualisation, we label encode columns such as ocean proximity, so that our models can use "
+           "these informations for the predictions."),
+    html.Hr(),
 
+    html.H2("Boxplots"),
+    html.P("There are a few outliers but they are not big enough for us to remove them."),
     html.Div(className='container',
              children=[
-                 html.P('Correlation Heatmap:'),
-                 dcc.Graph(figure=cor_heatmap),
+                 html.P('Boxplots:'),
+                 dcc.Graph(figure=boxplots_fig),
              ], style={'textAlign': 'center'}),
+    html.Hr(),
+
+    html.H2("Data Visualisation"),
 
     html.Div(className='container',
              children=[
-                 html.P('Pairplot:'),
-                 dcc.Graph(figure=pairplot_fig),
-             ], style={'textAlign': 'center'}),
-
-    html.Div(className='container',
-             children=[
-                 html.P('Ocean Proximity Distribution PieChart:'),
+                 html.P('Ocean Proximity Distribution PieChart :'),
                  dcc.Graph(figure=OP_pie_fig),
              ], style={'textAlign': 'center'}),
 
     html.Div(className='container',
              children=[
-                 html.P('Median Income, House Value and Ocean Proximity Scatterplot:'),
-                 dcc.Graph(figure=median_value_OP_scatter_fig),
+                 html.P('Correlation Heatmap :'),
+                 dcc.Graph(figure=cor_heatmap),
              ], style={'textAlign': 'center'}),
 
     html.Div(className='container',
              children=[
-                 html.P('Population concentration depending on location'),
+                 html.P('Pairplot :'),
+                 dcc.Graph(figure=pairplot_fig),
+             ], style={'textAlign': 'center'}),
+
+    html.Div(className='container',
+             children=[
+                 html.P('Median Income, House Value and Ocean Proximity Scatterplot :'),
+                 dcc.Graph(figure=median_value_OP_scatter_fig),
+             ], style={'textAlign': 'center'}),
+    html.Hr(),
+
+    html.H3("Maps"),
+
+    html.Div(className='container',
+             children=[
+                 html.P('Population concentration depending on location :'),
                  dcc.Graph(figure=population_scatter_fig),
              ], style={'textAlign': 'center'}),
 
     html.Div(className='container',
              children=[
-                 html.P('Median House Value and other characteristics on Map'),
+                 html.P('Median House Value and other characteristics on Map :'),
                  dcc.Graph(figure=all_houses_map),
              ], style={'textAlign': 'center'}),
+    html.Hr(),
 ])
 
-# XGBoost TODO
+# XGBoost
 layout_page_1 = html.Div([
-    html.H1('XGBoost')
+    html.H1('XGBoost'),
+    html.H2("How will we evaluate our Regression model ?"),
+    html.P(mae_explaination),
+    html.Hr(),
+    html.P(mse_explaination),
+    html.Hr(),
+    html.P(rmse_explaination),
+    html.Hr(),
+    html.P(r2score_explaination),
+    html.Hr(),
+
+    html.H2("The model's results"),
+    html.Br(),
+    html.P(MAE),
+    html.Hr(),
+    html.P(MSE),
+    html.P(RMSE),
+    html.Hr(),
+    html.P(R2),
+    html.P(R2_cross),
+    html.Hr()
 ])
