@@ -9,5 +9,6 @@ Summary :
 * Decision Tree
 * Random Forest
 * XGBoost
+* Grid Search
 
 Data : https://www.kaggle.com/camnugent/california-housing-prices
